@@ -162,8 +162,8 @@ def parse_arguments():
 if __name__ == '__main__':
 
     dataset = 'Mallat'
-    path = '/Users/shenda/Movies/data/UCRArchive_2018'
-    save_path = '/Users/shenda/Movies/data/exp'
+    path = '/shared/ts/UCRArchive_2018'
+    save_path = '/shared/ts/exp'
     cuda = False
     gpu = 0
     hyper = 'default_hyperparameters.json'
