@@ -23,6 +23,7 @@ import sklearn
 import sklearn.svm
 import sklearn.externals
 import sklearn.model_selection
+from tqdm import tqdm
 
 import utils
 import losses
@@ -247,7 +248,7 @@ class TimeSeriesEncoderClassifier(sklearn.base.BaseEstimator,
         found_best = False
 
         # Encoder training
-        while i < self.nb_steps:
+        for i in tqdm(range(nb_steps)):
             if verbose:
                 print('Epoch: ', epochs + 1)
             for batch in train_generator:
@@ -264,7 +265,7 @@ class TimeSeriesEncoderClassifier(sklearn.base.BaseEstimator,
                     )
                 loss.backward()
                 self.optimizer.step()
-                i += 1
+
                 if i >= self.nb_steps:
                     break
             epochs += 1
