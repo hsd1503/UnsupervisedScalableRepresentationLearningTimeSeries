@@ -39,14 +39,14 @@ def temporal_positive_ratio(batch_size):
     temporal ratio of postive samples are always 1
     """
     mat = torch.ones((batch_size, batch_size))
-    return mat
+    return mat.cuda()
 
 def temporal_negative_ratio(batch_size):
     """
     temporal ratio of postive samples are always -1
     """
     mat = -torch.ones((batch_size, batch_size))
-    return mat
+    return mat.cuda()
 
 def dtw_ratio(batch1, batch2, batch_size):
     """
@@ -64,7 +64,7 @@ def dtw_ratio(batch1, batch2, batch_size):
             ts2 = batch2[j, 0, :]
             d, cost_matrix, acc_cost_matrix, path = accelerated_dtw(ts1, ts2, dist='euclidean', warp=1)
             mat[i, j] = numpy.tanh(-d/smooth)
-    return torch.Tensor(mat)
+    return torch.Tensor(mat).cuda()
 
 def get_spectrum(ts):
     fs = 1
@@ -93,7 +93,7 @@ def spectrum_ratio(batch1, batch2, batch_size):
             ts2 = batch2[j, 0, :]
             d = kl_divergence(get_spectrum(ts1), get_spectrum(ts2))
             mat[i, j] = numpy.tanh(-d)
-    return torch.Tensor(mat)
+    return torch.Tensor(mat).cuda()
 
 class TripletLoss(torch.nn.modules.loss._Loss):
     """
