@@ -113,6 +113,7 @@ class TripletLoss(torch.nn.modules.loss._Loss):
         size_representation = representation.size(1)
         # Positive loss: -logsigmoid of dot product between anchor and positive
         # representations
+        # TODO: add our losses here
         loss = -torch.mean(torch.nn.functional.logsigmoid(torch.bmm(
             representation.view(batch_size, 1, size_representation),
             positive_representation.view(batch_size, size_representation, 1)
@@ -137,6 +138,7 @@ class TripletLoss(torch.nn.modules.loss._Loss):
                     beginning_samples_neg[i, j] + length_pos_neg
                 ] for j in range(batch_size)])
             )
+            # TODO: add our losses here
             loss += multiplicative_ratio * -torch.mean(
                 torch.nn.functional.logsigmoid(-torch.bmm(
                     representation.view(batch_size, 1, size_representation),
