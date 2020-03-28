@@ -1,5 +1,7 @@
 # TODO list
 
+`python main.py`
+
 (1) improve speed: dtw is very slow, parallel?
 
 
