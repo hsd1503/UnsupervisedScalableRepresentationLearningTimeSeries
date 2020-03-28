@@ -55,8 +55,8 @@ def dtw_ratio(batch1, batch2, batch_size):
     dtw ratio of pairs of samples (ts1, ts2) is tanh(-dtw_dist(ts1, ts2)/smooth)
     """
     smooth = 100
-    batch1 = batch1.numpy()
-    batch2 = batch2.numpy()
+    batch1 = batch1.cpu().numpy()
+    batch2 = batch2.cpu().numpy()
     mat = numpy.zeros((batch_size, batch_size))
     for i in range(0, batch_size):
         for j in range(0, batch_size):
@@ -84,8 +84,8 @@ def spectrum_ratio(batch1, batch2, batch_size):
 
     dtw ratio of pairs of samples (ts1, ts2) is tanh(-kl_divergence(spectrum(ts1), spectrum(ts2)))
     """
-    batch1 = batch1.numpy()
-    batch2 = batch2.numpy()
+    batch1 = batch1.cpu().numpy()
+    batch2 = batch2.cpu().numpy()
     mat = numpy.zeros((batch_size, batch_size))
     for i in range(0, batch_size):
         for j in range(0, batch_size):
