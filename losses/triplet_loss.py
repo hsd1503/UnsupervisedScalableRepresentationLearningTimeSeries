@@ -18,7 +18,82 @@
 
 import torch
 import numpy
+from dtw import dtw, accelerated_dtw
+from scipy.signal import periodogram
 
+
+def dot_product(representation1, representation2, batch_size):
+    """
+    compute dot_product of two representations
+    shape of representation1, representation1: (batch_size, out_channels)
+    """
+    size_representation = representation1.size(1)
+    mat = torch.bmm(
+        representation1.view(batch_size, 1, size_representation),
+        representation2.view(batch_size, size_representation, 1)
+        )
+    return mat
+
+def temporal_positive_ratio(batch_size):
+    """
+    temporal ratio of postive samples are always 1
+    """
+    mat = torch.ones((batch_size, batch_size))
+    return mat
+
+def temporal_negative_ratio(batch_size):
+    """
+    temporal ratio of postive samples are always -1
+    """
+    mat = -torch.ones((batch_size, batch_size))
+    return mat
+
+def dtw_ratio(batch1, batch2, batch_size):
+    """
+    Dynamic Time Wrapping measurement
+
+    dtw ratio of pairs of samples (ts1, ts2) is tanh(-dtw_dist(ts1, ts2)/smooth)
+    """
+    smooth = 100
+    batch1 = batch1.numpy()
+    batch2 = batch2.numpy()
+    mat = numpy.zeros((batch_size, batch_size))
+    for i in range(0, batch_size):
+        for j in range(0, batch_size):
+            ts1 = batch1[i, 0, :]
+            ts2 = batch2[j, 0, :]
+            d, cost_matrix, acc_cost_matrix, path = accelerated_dtw(ts1, ts2, dist='euclidean', warp=1)
+            mat[i, j] = numpy.tanh(-d/smooth)
+    return torch.Tensor(mat)
+
+def get_spectrum(ts):
+    fs = 1
+    nfft = len(ts)
+    partition = [2**-15, 2**-14, 2**-13, 2**-12, 2**-11, 2**-10, 2**-9, 2**-8, 2**-7, 2**-6, 2**-5, 2**-4, 2**-3, 2**-2, 2**-1]
+    f, psd = periodogram(ts, fs)
+    partition = [int(x * nfft / fs) for x in partition]
+    p = numpy.array([sum(psd[partition[x] : partition[x + 1]]) for x in range(len(partition)-1)])
+    return p
+
+def kl_divergence(p, q):
+    return numpy.sum(numpy.where(p != 0, p * numpy.log(p / q), 0))
+
+def spectrum_ratio(batch1, batch2, batch_size):
+    """
+    Spectrum measurement
+
+    dtw ratio of pairs of samples (ts1, ts2) is tanh(-kl_divergence(spectrum(ts1), spectrum(ts2)))
+    """
+    batch1 = batch1.numpy()
+    batch2 = batch2.numpy()
+    mat = numpy.zeros((batch_size, batch_size))
+    for i in range(0, batch_size):
+        for j in range(0, batch_size):
+            ts1 = batch1[i, 0, :]
+            ts2 = batch2[j, 0, :]
+            d = kl_divergence(get_spectrum(ts1), get_spectrum(ts2))
+            mat[i, j] = numpy.tanh(-d)
+    return torch.Tensor(mat)
 
 class TripletLoss(torch.nn.modules.loss._Loss):
     """
@@ -57,6 +132,7 @@ class TripletLoss(torch.nn.modules.loss._Loss):
         self.negative_penalty = negative_penalty
 
     def forward(self, batch, encoder, train, save_memory=False):
+        print('forward')
         batch_size = batch.size(0)
         train_size = train.size(0)
         length = min(self.compared_length, train.size(2))
@@ -97,27 +173,31 @@ class TripletLoss(torch.nn.modules.loss._Loss):
             size=(self.nb_random_samples, batch_size)
         )
 
-        representation = encoder(torch.cat(
+        anchor_batch = torch.cat(
             [batch[
                 j: j + 1, :,
                 beginning_batches[j]: beginning_batches[j] + random_length
             ] for j in range(batch_size)]
-        ))  # Anchors representations
+        ) # (batch_size, 1, random_length)
+        representation = encoder(anchor_batch)  # Anchors representations, (batch_size, out_channels)
 
-        positive_representation = encoder(torch.cat(
+        positive_batch = torch.cat(
             [batch[
                 j: j + 1, :, end_positive[j] - length_pos_neg: end_positive[j]
             ] for j in range(batch_size)]
-        ))  # Positive samples representations
+        ) # (batch_size, 1, length_pos_neg)
+        # TODO: MoCo, memory momentum
+        positive_representation = encoder(positive_batch)  # Positive samples representations, (batch_size, out_channels)
 
-        size_representation = representation.size(1)
-        # Positive loss: -logsigmoid of dot product between anchor and positive
-        # representations
+        # Positive loss: -logsigmoid of dot product between anchor and positive representations
         # TODO: add our losses here
-        loss = -torch.mean(torch.nn.functional.logsigmoid(torch.bmm(
-            representation.view(batch_size, 1, size_representation),
-            positive_representation.view(batch_size, size_representation, 1)
-        )))
+        mat_anchor_positive = dot_product(representation, positive_representation, batch_size)
+        ratio_positive = temporal_positive_ratio(batch_size)
+        ratio_dtw = dtw_ratio(anchor_batch, positive_batch, batch_size)
+        ratio_spectrum = spectrum_ratio(anchor_batch, positive_batch, batch_size)
+        loss = -torch.mean(
+                torch.nn.functional.logsigmoid(
+                    torch.mul(ratio_spectrum, torch.mul(ratio_dtw, torch.mul(ratio_positive, mat_anchor_positive)))))
 
         # If required, backward through the first computed term of the loss and
         # free from the graph everything related to the positive sample
@@ -131,22 +211,20 @@ class TripletLoss(torch.nn.modules.loss._Loss):
         for i in range(self.nb_random_samples):
             # Negative loss: -logsigmoid of minus the dot product between
             # anchor and negative representations
-            negative_representation = encoder(
-                torch.cat([train[samples[i, j]: samples[i, j] + 1][
-                    :, :,
-                    beginning_samples_neg[i, j]:
-                    beginning_samples_neg[i, j] + length_pos_neg
+            negative_batch = torch.cat(
+                [train[samples[i, j]: samples[i, j] + 1][
+                    :, :, beginning_samples_neg[i, j]:beginning_samples_neg[i, j] + length_pos_neg
                 ] for j in range(batch_size)])
-            )
+            negative_representation = encoder(negative_batch)
             # TODO: add our losses here
+            mat_anchor_negative = dot_product(representation, negative_representation, batch_size)
+            ratio_positive = temporal_positive_ratio(batch_size)
+            ratio_dtw = dtw_ratio(anchor_batch, positive_batch, batch_size)
+            ratio_spectrum = spectrum_ratio(anchor_batch, positive_batch, batch_size)
             loss += multiplicative_ratio * -torch.mean(
-                torch.nn.functional.logsigmoid(-torch.bmm(
-                    representation.view(batch_size, 1, size_representation),
-                    negative_representation.view(
-                        batch_size, size_representation, 1
-                    )
-                ))
-            )
+                torch.nn.functional.logsigmoid(
+                    torch.mul(ratio_spectrum, torch.mul(ratio_dtw, torch.mul(ratio_positive, mat_anchor_negative)))))
+
             # If required, backward through the first computed term of the loss
             # and free from the graph everything related to the negative sample
             # Leaves the last backward pass to the training procedure
