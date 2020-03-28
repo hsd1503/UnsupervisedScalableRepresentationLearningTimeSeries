@@ -248,7 +248,7 @@ class TimeSeriesEncoderClassifier(sklearn.base.BaseEstimator,
         found_best = False
 
         # Encoder training
-        for i in tqdm(range(nb_steps)):
+        for i in tqdm(range(self.nb_steps)):
             if verbose:
                 print('Epoch: ', epochs + 1)
             for batch in train_generator:
