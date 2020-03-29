@@ -19,6 +19,8 @@
 import torch
 import numpy
 from dtw import dtw, accelerated_dtw
+from fastdtw import fastdtw
+from scipy.spatial.distance import euclidean
 from scipy.signal import periodogram
 
 
@@ -32,20 +34,20 @@ def dot_product(representation1, representation2, batch_size):
         representation1.view(batch_size, 1, size_representation),
         representation2.view(batch_size, size_representation, 1)
         )
-    return mat
+    return mat.cuda()
 
 def temporal_positive_ratio(batch_size):
     """
     temporal ratio of postive samples are always 1
     """
-    mat = torch.ones((batch_size, batch_size))
+    mat = torch.ones((batch_size, batch_size), dtype=torch.double)
     return mat.cuda()
 
 def temporal_negative_ratio(batch_size):
     """
     temporal ratio of postive samples are always -1
     """
-    mat = -torch.ones((batch_size, batch_size))
+    mat = -torch.ones((batch_size, batch_size), dtype=torch.double)
     return mat.cuda()
 
 def dtw_ratio(batch1, batch2, batch_size):
@@ -62,9 +64,10 @@ def dtw_ratio(batch1, batch2, batch_size):
         for j in range(0, batch_size):
             ts1 = batch1[i, 0, :]
             ts2 = batch2[j, 0, :]
-            d, cost_matrix, acc_cost_matrix, path = accelerated_dtw(ts1, ts2, dist='euclidean', warp=1)
+            #d1, cost_matrix, acc_cost_matrix, path = accelerated_dtw(ts1, ts2, dist='euclidean', warp=1)
+            d,_ = fastdtw(ts1,ts2, dist=2)
             mat[i, j] = numpy.tanh(-d/smooth)
-    return torch.Tensor(mat).cuda()
+    return torch.DoubleTensor(mat).cuda()
 
 def get_spectrum(ts):
     fs = 1
@@ -93,7 +96,7 @@ def spectrum_ratio(batch1, batch2, batch_size):
             ts2 = batch2[j, 0, :]
             d = kl_divergence(get_spectrum(ts1), get_spectrum(ts2))
             mat[i, j] = numpy.tanh(-d)
-    return torch.Tensor(mat).cuda()
+    return torch.DoubleTensor(mat).cuda()
 
 class TripletLoss(torch.nn.modules.loss._Loss):
     """
@@ -130,7 +133,7 @@ class TripletLoss(torch.nn.modules.loss._Loss):
             self.compared_length = numpy.inf
         self.nb_random_samples = nb_random_samples
         self.negative_penalty = negative_penalty
-
+    
     def forward(self, batch, encoder, train, save_memory=False):
         print('forward')
         batch_size = batch.size(0)
@@ -195,6 +198,7 @@ class TripletLoss(torch.nn.modules.loss._Loss):
         ratio_positive = temporal_positive_ratio(batch_size)
         ratio_dtw = dtw_ratio(anchor_batch, positive_batch, batch_size)
         ratio_spectrum = spectrum_ratio(anchor_batch, positive_batch, batch_size)
+        #print(mat_anchor_positive, ratio_positive, ratio_dtw, ratio_spectrum)
         loss = -torch.mean(
                 torch.nn.functional.logsigmoid(
                     torch.mul(ratio_spectrum, torch.mul(ratio_dtw, torch.mul(ratio_positive, mat_anchor_positive)))))
