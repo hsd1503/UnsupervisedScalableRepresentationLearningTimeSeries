@@ -64,8 +64,8 @@ def dtw_ratio(batch1, batch2, batch_size):
         for j in range(0, batch_size):
             ts1 = batch1[i, 0, :]
             ts2 = batch2[j, 0, :]
-            #d1, cost_matrix, acc_cost_matrix, path = accelerated_dtw(ts1, ts2, dist='euclidean', warp=1)
-            d,_ = fastdtw(ts1,ts2, dist=2)
+            d, cost_matrix, acc_cost_matrix, path = accelerated_dtw(ts1, ts2, dist='euclidean', warp=1)
+            #d,_ = fastdtw(ts1,ts2, dist=2)
             mat[i, j] = numpy.tanh(-d/smooth)
     return torch.DoubleTensor(mat).cuda()
 
