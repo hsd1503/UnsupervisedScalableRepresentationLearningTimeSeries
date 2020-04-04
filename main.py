@@ -131,41 +131,11 @@ def fit_hyperparameters(file, train, train_labels, cuda, gpu,
         train, train_labels, save_memory=save_memory, verbose=True
     )
 
+def run():
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description='Classification tests for UCR repository datasets'
-    )
-    parser.add_argument('--dataset', type=str, metavar='D', required=True,
-                        help='dataset name')
-    parser.add_argument('--path', type=str, metavar='PATH', required=True,
-                        help='path where the dataset is located')
-    parser.add_argument('--save_path', type=str, metavar='PATH', required=True,
-                        help='path where the estimator is/should be saved')
-    parser.add_argument('--cuda', action='store_true',
-                        help='activate to use CUDA')
-    parser.add_argument('--gpu', type=int, default=0, metavar='GPU',
-                        help='index of GPU used for computations (default: 0)')
-    parser.add_argument('--hyper', type=str, metavar='FILE', required=True,
-                        help='path of the file of hyperparameters to use; ' +
-                             'for training; must be a JSON file')
-    parser.add_argument('--load', action='store_true', default=False,
-                        help='activate to load the estimator instead of ' +
-                             'training it')
-    parser.add_argument('--fit_classifier', action='store_true', default=False,
-                        help='if not supervised, activate to load the ' +
-                             'model and retrain the classifier')
-
-    return parser.parse_args()
-
-
-if __name__ == '__main__':
-
-    dataset = 'Mallat'
-    path = '/shared/ts/UCRArchive_2018'
-    save_path = '/shared/ts/exp'
-    cuda = False
-    gpu = 0
+    path = '/localscratch/shared/ts/UCRArchive_2018'
+    save_path = '/localscratch/shared/ts/exp'
+    cuda = True
     hyper = 'default_hyperparameters.json'
     load = False
     fit_classifier = False
@@ -192,3 +162,12 @@ if __name__ == '__main__':
             json.dump(classifier.get_params(), fp)
 
     print("Test accuracy: " + str(classifier.score(test, test_labels)))
+    
+    
+if __name__ == '__main__':
+
+    dataset = 'Mallat'
+    gpu = 0
+    
+    run(dataset, gpu)
+
