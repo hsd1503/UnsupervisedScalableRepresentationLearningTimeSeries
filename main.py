@@ -151,8 +151,6 @@ def run(dataset, gpu, log_name):
     fit_classifier = False
 
     train, train_labels, test, test_labels = load_UCR_dataset(path, dataset)
-    print(bool(numpy.isnan(numpy.sum(train))))
-    return
 
     if not load and not fit_classifier:
         classifier = fit_hyperparameters(hyper, train, train_labels, cuda, gpu)
