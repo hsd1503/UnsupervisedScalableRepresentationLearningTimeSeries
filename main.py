@@ -131,7 +131,7 @@ def fit_hyperparameters(file, train, train_labels, cuda, gpu,
         train, train_labels, save_memory=save_memory, verbose=True
     )
 
-def run():
+def run(dataset, gpu):
 
     path = '/localscratch/shared/ts/UCRArchive_2018'
     save_path = '/localscratch/shared/ts/exp'
@@ -141,6 +141,8 @@ def run():
     fit_classifier = False
 
     train, train_labels, test, test_labels = load_UCR_dataset(path, dataset)
+    print(bool(numpy.isnan(numpy.sum(train))))
+    return
 
     if not load and not fit_classifier:
         classifier = fit_hyperparameters(hyper, train, train_labels, cuda, gpu)
@@ -166,8 +168,7 @@ def run():
     
 if __name__ == '__main__':
 
-    dataset = 'Mallat'
-    gpu = 0
-    
-    run(dataset, gpu)
+    dataset_list = ['Adiac','ArrowHead','Beef','BeetleFly','BirdChicken','Car','CBF','ChlorineConcentration','CinCECGtorso','Coffee','Computers','CricketX','CricketY','CricketZ','DiatomSizeReduction','DistalPhalanxOutlineCorrect','DistalPhalanxOutlineAgeGroup','DistalPhalanxTW','Earthquakes','ECG200','ECG5000','ECGFiveDays','ElectricDevices','FaceAll','FaceFour','FacesUCR','FiftyWords','Fish','FordA','FordB','GunPoint','Ham','HandOutlines','Haptics','Herring','InlineSkate','InsectWingbeatSound','ItalyPowerDemand','LargeKitchenAppliances','Lightning2','Lightning7','Mallat','Meat','MedicalImages','MiddlePhalanxOutlineCorrect','MiddlePhalanxOutlineAgeGroup','MiddlePhalanxTW','MoteStrain','NonInvasiveFatalECGThorax1','NonInvasiveFatalECGThorax2','OliveOil','OSULeaf','PhalangesOutlinesCorrect','Phoneme','Plane','ProximalPhalanxOutlineCorrect','ProximalPhalanxOutlineAgeGroup','ProximalPhalanxTW','RefrigerationDevices','ScreenType','ShapeletSim','ShapesAll','SmallKitchenAppliances','SonyAIBORobotSurface1','SonyAIBORobotSurface2','StarlightCurves','Strawberry','SwedishLeaf','Symbols','SyntheticControl','ToeSegmentation1','ToeSegmentation2','Trace','TwoLeadECG','TwoPatterns','UWaveGestureLibraryX','UWaveGestureLibraryY','UWaveGestureLibraryZ','UWaveGestureLibraryAll','Wafer','Wine','WordSynonyms','Worms','WormsTwoClass','Yoga','ACSF1','AllGestureWiimoteX','AllGestureWiimoteY','AllGestureWiimoteZ','BME','Chinatown','Crop','DodgerLoopDay','DodgerLoopGame','DodgerLoopWeekend','EOGHorizontalSignal','EOGVerticalSignal','EthanolLevel','FreezerRegularTrain','FreezerSmallTrain','Fungi','GestureMidAirD1','GestureMidAirD2','GestureMidAirD3','GesturePebbleZ1','GesturePebbleZ2','GunPointAgeSpan','GunPointMaleVersusFemale','GunPointOldVersusYoung','HouseTwenty','InsectEPGRegularTrain','InsectEPGSmallTrain','MelbournePedestrian','MixedShapesRegularTrain','MixedShapesSmallTrain','PickupGestureWiimoteZ','PigAirwayPressure','PigArtPressure','PigCVP','PLAID','PowerCons','Rock','SemgHandGenderCh2','SemgHandMovementCh2','SemgHandSubjectCh2','ShakeGestureWiimoteZ','SmoothSubspace','UMD']
 
+    for dataset in dataset_list:
+        run(dataset=dataset, gpu=0)
