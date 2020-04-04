@@ -23,9 +23,19 @@ import torch
 import numpy
 import pandas
 import argparse
+from time import gmtime, strftime
 
 import scikit_wrappers
 
+
+def get_time_str():
+    return strftime("%Y%m%d_%H%M%S", gmtime())
+
+def print_and_log(my_str, log_name):
+    out = '{}|{}'.format(get_time_str(), my_str)
+    print(out)
+    with open(log_name, 'a') as f_log:
+        print(out, file=f_log)      
 
 def load_UCR_dataset(path, dataset):
     """
@@ -131,7 +141,7 @@ def fit_hyperparameters(file, train, train_labels, cuda, gpu,
         train, train_labels, save_memory=save_memory, verbose=True
     )
 
-def run(dataset, gpu):
+def run(dataset, gpu, log_name):
 
     path = '/localscratch/shared/ts/UCRArchive_2018'
     save_path = '/localscratch/shared/ts/exp'
@@ -163,7 +173,7 @@ def run(dataset, gpu):
         with open(os.path.join(save_path, dataset + '_hyperparameters.json'), 'w') as fp:
             json.dump(classifier.get_params(), fp)
 
-    print("Test accuracy: " + str(classifier.score(test, test_labels)))
+    print_and_log("Test accuracy: " + str(classifier.score(test, test_labels)), log_name)
     
     
 if __name__ == '__main__':
@@ -175,4 +185,4 @@ if __name__ == '__main__':
     dataset_list_varied = ['AllGestureWiimoteX','AllGestureWiimoteY','AllGestureWiimoteZ','DodgerLoopDay','DodgerLoopGame','DodgerLoopWeekend','GestureMidAirD1','GestureMidAirD2','GestureMidAirD3','GesturePebbleZ1','GesturePebbleZ2','MelbournePedestrian','PickupGestureWiimoteZ','PLAID','ShakeGestureWiimoteZ']
 
     for dataset in dataset_list_1:
-        run(dataset=dataset, gpu=0)
+        run(dataset=dataset, gpu=0, log_name='dataset_list_1.txt')
