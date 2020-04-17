@@ -112,7 +112,7 @@ def load_UCR_dataset(path, dataset):
     return train, train_labels, test, test_labels
 
 
-def fit_hyperparameters(file, train, train_labels, cuda, gpu,
+def fit_hyperparameters(file, train, train_labels, cuda, gpu, model, 
                         save_memory=False):
     """
     Creates a classifier from the given set of hyperparameters in the input
@@ -126,7 +126,7 @@ def fit_hyperparameters(file, train, train_labels, cuda, gpu,
     @param save_memory If True, save GPU memory by propagating gradients after
            each loss term, instead of doing it after computing the whole loss.
     """
-    classifier = scikit_wrappers.CausalCNNEncoderClassifier()
+    classifier = scikit_wrappers.CausalCNNEncoderClassifier(model=model)
 
     # Loads a given set of hyperparameters and fits a model with those
     hf = open(os.path.join(file), 'r')
@@ -141,7 +141,7 @@ def fit_hyperparameters(file, train, train_labels, cuda, gpu,
         train, train_labels, save_memory=save_memory, verbose=True
     )
 
-def run(dataset, gpu, log_name):
+def run(dataset, gpu, log_name, model):
 
     path = '/localscratch/shared/ts/UCRArchive_2018'
     save_path = '/localscratch/shared/ts/exp'
@@ -153,9 +153,9 @@ def run(dataset, gpu, log_name):
     train, train_labels, test, test_labels = load_UCR_dataset(path, dataset)
 
     if not load and not fit_classifier:
-        classifier = fit_hyperparameters(hyper, train, train_labels, cuda, gpu)
+        classifier = fit_hyperparameters(hyper, train, train_labels, cuda, gpu, model)
     else:
-        classifier = scikit_wrappers.CausalCNNEncoderClassifier()
+        classifier = scikit_wrappers.CausalCNNEncoderClassifier(model=model)
         hf = open(os.path.join(save_path, dataset + '_hyperparameters.json'), 'r')
         hp_dict = json.load(hf)
         hf.close()
@@ -183,4 +183,4 @@ if __name__ == '__main__':
     dataset_list_varied = ['AllGestureWiimoteX','AllGestureWiimoteY','AllGestureWiimoteZ','DodgerLoopDay','DodgerLoopGame','DodgerLoopWeekend','GestureMidAirD1','GestureMidAirD2','GestureMidAirD3','GesturePebbleZ1','GesturePebbleZ2','MelbournePedestrian','PickupGestureWiimoteZ','PLAID','ShakeGestureWiimoteZ']
 
     for dataset in dataset_list_2:
-        run(dataset=dataset, gpu=1, log_name='dataset_list_2.txt')
+        run(dataset=dataset, gpu=1, log_name='dataset_list_2_baseline.txt', model='baseline')

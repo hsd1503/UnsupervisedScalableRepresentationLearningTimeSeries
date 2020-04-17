@@ -67,7 +67,7 @@ class TimeSeriesEncoderClassifier(sklearn.base.BaseEstimator,
     def __init__(self, compared_length, nb_random_samples, negative_penalty,
                  batch_size, nb_steps, lr, penalty, early_stopping,
                  encoder, params, in_channels, out_channels, cuda=False,
-                 gpu=0):
+                 gpu=0, model='new'):
         self.architecture = ''
         self.cuda = cuda
         self.gpu = gpu
@@ -80,9 +80,14 @@ class TimeSeriesEncoderClassifier(sklearn.base.BaseEstimator,
         self.params = params
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.loss = losses.triplet_loss.TripletLoss(
-            compared_length, nb_random_samples, negative_penalty
-        )
+        if model=='baseline':
+            self.loss = losses.triplet_loss.TripletLoss(
+                compared_length, nb_random_samples, negative_penalty
+            )
+        elif model=='new':
+            self.loss = losses.triplet_loss.TripletLossNew(
+                compared_length, nb_random_samples, negative_penalty
+            )
         self.loss_varying = losses.triplet_loss.TripletLossVaryingLength(
             compared_length, nb_random_samples, negative_penalty
         )
