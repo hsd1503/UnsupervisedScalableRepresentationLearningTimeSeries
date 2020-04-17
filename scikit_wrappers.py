@@ -81,10 +81,12 @@ class TimeSeriesEncoderClassifier(sklearn.base.BaseEstimator,
         self.in_channels = in_channels
         self.out_channels = out_channels
         if model=='baseline':
+            print('use {} loss'.format(model))
             self.loss = losses.triplet_loss.TripletLoss(
                 compared_length, nb_random_samples, negative_penalty
             )
         elif model=='new':
+            print('use {} loss'.format(model))
             self.loss = losses.triplet_loss.TripletLossNew(
                 compared_length, nb_random_samples, negative_penalty
             )
