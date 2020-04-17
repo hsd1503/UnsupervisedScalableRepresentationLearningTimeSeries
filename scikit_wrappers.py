@@ -486,7 +486,7 @@ class CausalCNNEncoderClassifier(TimeSeriesEncoderClassifier):
                                   out_channels, kernel_size, cuda, gpu),
             self.__encoder_params(in_channels, channels, depth, reduced_size,
                                   out_channels, kernel_size),
-            in_channels, out_channels, cuda, gpu
+            in_channels, out_channels, cuda, gpu, model
         )
         self.architecture = 'CausalCNN'
         self.channels = channels
@@ -678,7 +678,7 @@ class LSTMEncoderClassifier(TimeSeriesEncoderClassifier):
         super(LSTMEncoderClassifier, self).__init__(
             compared_length, nb_random_samples, negative_penalty, batch_size,
             nb_steps, lr, penalty, early_stopping,
-            self.__create_encoder(cuda, gpu), {}, in_channels, 160, cuda, gpu
+            self.__create_encoder(cuda, gpu), {}, in_channels, 160, cuda, gpu, model
         )
         assert in_channels == 1
         self.architecture = 'LSTM'
