@@ -478,7 +478,7 @@ class CausalCNNEncoderClassifier(TimeSeriesEncoderClassifier):
                  negative_penalty=1, batch_size=1, nb_steps=2000, lr=0.001,
                  penalty=1, early_stopping=None, channels=10, depth=1,
                  reduced_size=10, out_channels=10, kernel_size=4,
-                 in_channels=1, cuda=False, gpu=0):
+                 in_channels=1, cuda=False, gpu=0, model='new'):
         super(CausalCNNEncoderClassifier, self).__init__(
             compared_length, nb_random_samples, negative_penalty, batch_size,
             nb_steps, lr, penalty, early_stopping,
@@ -674,7 +674,7 @@ class LSTMEncoderClassifier(TimeSeriesEncoderClassifier):
     def __init__(self, compared_length=50, nb_random_samples=10,
                  negative_penalty=1, batch_size=1, nb_steps=2000, lr=0.001,
                  penalty=1, early_stopping=None, in_channels=1, cuda=False,
-                 gpu=0):
+                 gpu=0, model='new'):
         super(LSTMEncoderClassifier, self).__init__(
             compared_length, nb_random_samples, negative_penalty, batch_size,
             nb_steps, lr, penalty, early_stopping,
